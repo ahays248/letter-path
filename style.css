@@ -1,0 +1,435 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #1a1a2e;
+  font-family: system-ui, sans-serif;
+  color: #eee;
+}
+
+#app {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+#game-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+}
+
+/* ——— Thin top progress (kid-visible, low occlusion) ——— */
+#top-bar {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(420px, 94vw);
+  padding: calc(8px + env(safe-area-inset-top, 0px)) 12px 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  pointer-events: none;
+  user-select: none;
+  z-index: 3;
+  text-align: center;
+  /* Soft scrim so stars/letters read on bright sky without a big card */
+  background: linear-gradient(
+    180deg,
+    rgba(15, 23, 42, 0.55) 0%,
+    rgba(15, 23, 42, 0.2) 70%,
+    transparent 100%
+  );
+  border-radius: 0 0 14px 14px;
+}
+
+/* Ready: animal is the product — even thinner chrome */
+body.phase-ready #top-bar {
+  opacity: 0.85;
+  width: min(280px, 70vw);
+  padding-bottom: 4px;
+}
+
+body.phase-ready #progress-strip {
+  font-size: 20px;
+  opacity: 0.75;
+}
+
+#stars {
+  font-size: 15px;
+  letter-spacing: 0.1em;
+  color: #fbbf24;
+  line-height: 1.2;
+}
+
+#progress-strip {
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  font-family: system-ui, Segoe UI, sans-serif;
+  color: #f8fafc;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.65);
+}
+
+#unlock-badge {
+  font-size: 12px;
+  font-weight: 700;
+  color: #fbbf24;
+}
+
+#unlock-badge.hidden {
+  display: none;
+}
+
+/* ——— Parent tools: top-right, not kid path ——— */
+#parent-tools {
+  position: absolute;
+  top: calc(8px + env(safe-area-inset-top, 0px));
+  right: 10px;
+  z-index: 6;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  pointer-events: none;
+}
+
+#parent-menu-btn,
+#mute-btn,
+#letter-mode-btn {
+  pointer-events: auto;
+  border: none;
+  border-radius: 10px;
+  background: rgba(51, 65, 85, 0.88);
+  color: #f8fafc;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+#parent-menu-btn {
+  width: 40px;
+  height: 40px;
+  font-size: 18px;
+  line-height: 1;
+  border-radius: 999px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+#parent-menu-btn[aria-expanded="true"] {
+  background: #1e3a5f;
+}
+
+#parent-panel {
+  pointer-events: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px;
+  background: rgba(15, 23, 42, 0.92);
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  min-width: 140px;
+}
+
+#parent-panel.hidden {
+  display: none;
+}
+
+.parent-meta {
+  font-size: 11px;
+  opacity: 0.75;
+  margin-bottom: 2px;
+}
+
+#mute-btn,
+#letter-mode-btn {
+  padding: 8px 12px;
+  font-size: 13px;
+  text-align: left;
+}
+
+#mute-btn:hover,
+#letter-mode-btn:hover,
+#parent-menu-btn:hover {
+  background: #475569;
+}
+
+#mute-btn[aria-pressed="true"] {
+  background: #7f1d1d;
+}
+
+#letter-mode-btn[aria-pressed="true"] {
+  background: #1e3a5f;
+}
+
+/* ——— Bottom toast: word / set complete only ——— */
+/* Sit mid-lower so phone L/R buttons and home bar never cover it */
+#toast {
+  position: absolute;
+  left: 50%;
+  top: auto;
+  bottom: calc(118px + env(safe-area-inset-bottom, 0px));
+  transform: translateX(-50%) translateY(6px);
+  z-index: 7;
+  max-width: min(94vw, 380px);
+  padding: 14px 20px;
+  border-radius: 16px;
+  background: rgba(6, 78, 59, 0.94);
+  border: 2px solid rgba(134, 239, 172, 0.65);
+  color: #ecfdf5;
+  font-size: 22px;
+  font-weight: 800;
+  text-align: center;
+  line-height: 1.25;
+  pointer-events: none;
+  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.45);
+  opacity: 0;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+#toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+#toast.set-complete {
+  background: rgba(113, 63, 18, 0.94);
+  border-color: rgba(253, 230, 138, 0.7);
+  color: #fffbeb;
+}
+
+#toast.hidden {
+  display: none;
+}
+
+#toast.fade-out {
+  opacity: 0;
+  transform: translateX(-50%) translateY(8px);
+}
+
+/* Hide toast while Go card is up so they do not stack */
+body.phase-ready #toast {
+  display: none !important;
+}
+
+/* Celebrate: keep toast on top of everything except unlock modal */
+body.phase-celebrate #toast,
+body.phase-setComplete #toast {
+  z-index: 9;
+}
+
+/* ——— R-7: large L/R ——— */
+#touch-controls {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 16px;
+  padding: 12px 14px calc(14px + env(safe-area-inset-bottom, 0px));
+  pointer-events: none;
+  z-index: 4;
+}
+
+/* Ready: lane buttons not needed; keep chrome quiet */
+body.phase-ready #touch-controls {
+  opacity: 0.35;
+  pointer-events: none;
+}
+
+body.phase-ready #touch-controls .lane-btn {
+  pointer-events: none;
+}
+
+.lane-btn {
+  pointer-events: auto;
+  min-width: min(42vw, 160px);
+  min-height: 72px;
+  padding: 14px 18px;
+  border: 3px solid rgba(248, 250, 252, 0.35);
+  border-radius: 18px;
+  background: rgba(15, 23, 42, 0.72);
+  color: #f8fafc;
+  font-size: 20px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+
+.lane-btn:hover,
+.lane-btn:focus-visible {
+  background: rgba(30, 58, 95, 0.9);
+  outline: none;
+  border-color: #93c5fd;
+}
+
+.lane-btn:active {
+  transform: scale(0.97);
+  background: rgba(34, 197, 94, 0.35);
+}
+
+.lane-arrow {
+  font-size: 22px;
+  opacity: 0.95;
+}
+
+.lane-label {
+  letter-spacing: 0.04em;
+}
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(15, 23, 42, 0.22);
+  pointer-events: auto;
+  z-index: 8;
+}
+
+/* Desktop ready: bottom-left so path stays visible */
+#start-overlay {
+  justify-content: flex-start;
+  align-items: flex-end;
+  padding: 24px 20px 28px 20px;
+  background: linear-gradient(
+    90deg,
+    rgba(15, 23, 42, 0.45) 0%,
+    rgba(15, 23, 42, 0.12) 42%,
+    transparent 70%
+  );
+  pointer-events: none;
+}
+
+#start-overlay .overlay-card {
+  pointer-events: auto;
+  margin-left: 8px;
+  margin-bottom: 12px;
+}
+
+.overlay.hidden {
+  display: none;
+}
+
+.overlay-card {
+  background: rgba(15, 23, 42, 0.9);
+  color: #f8fafc;
+  padding: 22px 28px;
+  border-radius: 16px;
+  text-align: center;
+  max-width: min(300px, 42vw);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+}
+
+.overlay-title {
+  font-size: 22px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.overlay-hint {
+  font-size: 15px;
+  opacity: 0.9;
+  margin-bottom: 18px;
+  line-height: 1.4;
+}
+
+#start-btn {
+  font-size: 22px;
+  font-weight: 700;
+  padding: 12px 36px;
+  border: none;
+  border-radius: 999px;
+  background: #22c55e;
+  color: #052e16;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+#start-btn:hover {
+  background: #4ade80;
+}
+
+.unlock-card .unlock-icon {
+  font-size: 48px;
+  margin: 12px 0 18px;
+}
+
+#unlock-ok-btn {
+  font-size: 20px;
+  font-weight: 700;
+  padding: 12px 28px;
+  border: none;
+  border-radius: 999px;
+  background: #fbbf24;
+  color: #422006;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+#unlock-ok-btn:hover {
+  background: #fcd34d;
+}
+
+#unlock-overlay .overlay-card {
+  max-width: min(340px, 90vw);
+}
+
+/* Mobile last so it wins the cascade */
+@media (max-width: 480px) {
+  .lane-btn {
+    min-height: 64px;
+    font-size: 17px;
+    min-width: min(44vw, 140px);
+  }
+
+  #progress-strip {
+    font-size: 22px;
+  }
+
+  #toast {
+    font-size: 19px;
+    bottom: calc(112px + env(safe-area-inset-bottom, 0px));
+    padding: 12px 16px;
+    max-width: min(96vw, 360px);
+  }
+
+  /* Go card: bottom center so path + animal stay clear on phones */
+  #start-overlay {
+    justify-content: center;
+    align-items: flex-end;
+    padding: 12px 12px calc(100px + env(safe-area-inset-bottom, 0px));
+    background: linear-gradient(
+      0deg,
+      rgba(15, 23, 42, 0.5) 0%,
+      rgba(15, 23, 42, 0.08) 45%,
+      transparent 70%
+    );
+  }
+
+  #start-overlay .overlay-card {
+    margin: 0;
+    max-width: min(320px, 92vw);
+  }
+}

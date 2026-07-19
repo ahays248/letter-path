@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#1a1a2e" />
+    <meta name="description" content="Walk the path, pick letters left or right, spell the animal word." />
+    <title>Letter Path</title>
+    <link rel="stylesheet" href="style.css" />
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+          "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+        }
+      }
+    </script>
+  </head>
+  <body>
+    <div id="app">
+      <canvas id="game-canvas" aria-label="Letter Path game" tabindex="0"></canvas>
+
+      <!-- Kid-facing: thin top strip (stars + letters). Middle stays clear for path/animal. -->
+      <header id="top-bar" aria-label="Progress">
+        <div id="stars" aria-live="polite">☆☆☆☆☆☆☆☆</div>
+        <div id="progress-strip" aria-live="polite">_ _ _</div>
+        <div id="unlock-badge" class="hidden" aria-live="polite">Bow!</div>
+      </header>
+
+      <!-- Parent tools: small corner, not kid focus -->
+      <div id="parent-tools">
+        <button
+          type="button"
+          id="parent-menu-btn"
+          aria-expanded="false"
+          aria-controls="parent-panel"
+          title="Parent settings"
+        >
+          ⚙
+        </button>
+        <div id="parent-panel" class="hidden" role="group" aria-label="Sound settings">
+          <p id="hud" class="parent-meta">Letter Path</p>
+          <button type="button" id="mute-btn" aria-pressed="false">Mute</button>
+          <button
+            type="button"
+            id="letter-mode-btn"
+            aria-pressed="false"
+            title="Letter name or letter sound (for parents)"
+          >
+            Letter: name
+          </button>
+        </div>
+      </div>
+
+      <!-- Big moments only (word / set complete) — above L/R, not over the animal -->
+      <div id="toast" class="hidden" role="status" aria-live="polite"></div>
+
+      <div id="touch-controls" aria-label="Lane controls">
+        <button type="button" id="btn-left" class="lane-btn" aria-label="Choose left letter">
+          <span class="lane-arrow" aria-hidden="true">◀</span>
+          <span class="lane-label">Left</span>
+        </button>
+        <button type="button" id="btn-right" class="lane-btn" aria-label="Choose right letter">
+          <span class="lane-label">Right</span>
+          <span class="lane-arrow" aria-hidden="true">▶</span>
+        </button>
+      </div>
+
+      <div id="start-overlay" class="overlay">
+        <div class="overlay-card">
+          <p class="overlay-title">Look at the animal</p>
+          <p class="overlay-hint">What letters spell its name? Then hit Go!</p>
+          <button type="button" id="start-btn">Go!</button>
+        </div>
+      </div>
+      <div id="unlock-overlay" class="overlay hidden">
+        <div class="overlay-card unlock-card">
+          <p class="overlay-title">You unlocked the bow!</p>
+          <p class="overlay-hint">You spelled every animal. Your bow is ready.</p>
+          <div class="unlock-icon" aria-hidden="true">🏹</div>
+          <button type="button" id="unlock-ok-btn">Awesome!</button>
+        </div>
+      </div>
+    </div>
+    <script type="module" src="./src/main.js"></script>
+  </body>
+</html>
